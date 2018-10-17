@@ -67,6 +67,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stack>
+#include <queue>
 #include "SymbolTable.h"
 using namespace std;
 
@@ -85,14 +86,18 @@ using namespace std;
 #define RELATIONAL_OP       10
 
 stack<SYMBOL_TABLE> scopeStack;
+queue<int> lambda;
 int numLines = 1;
+int numParameters = 0;
+bool isLambda = false;
+bool isLet = false;
 
 void printRule(const char *, const char *);
 int yyerror(const char *s);
 void printTokenInfo(const char* tokenType, const char* lexeme);
 bool findEntryInAnyScope(const string theName);
 void beginScope();
-void endScope();
+int endScope();
 
 extern "C" {
     int yyparse(void);
@@ -100,7 +105,7 @@ extern "C" {
     int yywrap() {return 1;}
 }
 
-#line 104 "youngr.tab.c" /* yacc.c:339  */
+#line 109 "youngr.tab.c" /* yacc.c:339  */
 
 # ifndef YY_NULLPTR
 #  if defined __cplusplus && 201103L <= __cplusplus
@@ -166,13 +171,13 @@ extern int yydebug;
 
 union YYSTYPE
 {
-#line 46 "youngr.y" /* yacc.c:355  */
+#line 51 "youngr.y" /* yacc.c:355  */
 
   char* text;
   TYPE_INFO typeInfo;
   int num;
 
-#line 176 "youngr.tab.c" /* yacc.c:355  */
+#line 181 "youngr.tab.c" /* yacc.c:355  */
 };
 
 typedef union YYSTYPE YYSTYPE;
@@ -189,7 +194,7 @@ int yyparse (void);
 
 /* Copy the second part of user declarations.  */
 
-#line 193 "youngr.tab.c" /* yacc.c:358  */
+#line 198 "youngr.tab.c" /* yacc.c:358  */
 
 #ifdef short
 # undef short
@@ -489,11 +494,11 @@ static const yytype_uint8 yytranslate[] =
   /* YYRLINE[YYN] -- Source line where rule number YYN was defined.  */
 static const yytype_uint16 yyrline[] =
 {
-       0,    70,    70,    77,    84,    97,   105,   112,   119,   126,
-     134,   141,   148,   155,   162,   169,   176,   184,   196,   256,
-     283,   299,   302,   324,   339,   342,   363,   376,   384,   405,
-     413,   418,   423,   429,   433,   437,   441,   446,   450,   455,
-     459,   463,   467,   471,   475,   480
+       0,    75,    75,    82,    89,   102,   110,   117,   124,   131,
+     139,   146,   153,   160,   167,   174,   181,   200,   212,   271,
+     298,   317,   323,   352,   381,   387,   408,   421,   429,   442,
+     455,   460,   465,   471,   475,   479,   483,   488,   492,   497,
+     501,   505,   509,   513,   517,   522
 };
 #endif
 
@@ -1312,177 +1317,188 @@ yyreduce:
   switch (yyn)
     {
         case 2:
-#line 71 "youngr.y" /* yacc.c:1646  */
+#line 76 "youngr.y" /* yacc.c:1646  */
     {
                                 printRule("START", "EXPR");
-                                printf("\n ---- Completed parsing ----\n\n");
+                                printf("\n---- Completed parsing ----\n\n");
                                 return 0;
                             }
-#line 1322 "youngr.tab.c" /* yacc.c:1646  */
+#line 1327 "youngr.tab.c" /* yacc.c:1646  */
     break;
 
   case 3:
-#line 78 "youngr.y" /* yacc.c:1646  */
+#line 83 "youngr.y" /* yacc.c:1646  */
     {
                                 printRule("EXPR", "CONST");
                                 (yyval.typeInfo).type = (yyvsp[0].typeInfo).type;
-                                (yyval.typeInfo).numParams = NOT_APPLICABLE;
+                                (yyval.typeInfo).numParams = (yyvsp[0].typeInfo).numParams;
                                 (yyval.typeInfo).returnType = NOT_APPLICABLE;
                             }
-#line 1333 "youngr.tab.c" /* yacc.c:1646  */
+#line 1338 "youngr.tab.c" /* yacc.c:1646  */
     break;
 
   case 4:
-#line 85 "youngr.y" /* yacc.c:1646  */
+#line 90 "youngr.y" /* yacc.c:1646  */
     {
                                 printRule("EXPR","IDENT");
-                                if(!findEntryInAnyScope(string((yyvsp[0].text))))
+                                if(!findEntryInAnyScope((yyvsp[0].text)))
                                 {
                                   yyerror("Undefined identifier");
                                   return(0);
                                 }
 
                                 (yyval.typeInfo).type = scopeStack.top().getType((yyvsp[0].text));
-                                (yyval.typeInfo).numParams = (yyval.typeInfo).numParams + 1;
-                                (yyval.typeInfo).returnType = NOT_APPLICABLE;
+                                (yyval.typeInfo).numParams = scopeStack.top().getNumParams((yyvsp[0].text));
+                                (yyval.typeInfo).returnType = scopeStack.top().getReturnType((yyvsp[0].text));
                             }
-#line 1350 "youngr.tab.c" /* yacc.c:1646  */
+#line 1355 "youngr.tab.c" /* yacc.c:1646  */
     break;
 
   case 5:
-#line 98 "youngr.y" /* yacc.c:1646  */
+#line 103 "youngr.y" /* yacc.c:1646  */
     {
                                 printRule("EXPR", "( PARENTHESIZED_EXPR )");
                                 (yyval.typeInfo).type = (yyvsp[-1].typeInfo).type;
                                 (yyval.typeInfo).numParams = (yyvsp[-1].typeInfo).numParams;
                                 (yyval.typeInfo).returnType = (yyvsp[-1].typeInfo).returnType;
                             }
-#line 1361 "youngr.tab.c" /* yacc.c:1646  */
+#line 1366 "youngr.tab.c" /* yacc.c:1646  */
     break;
 
   case 6:
-#line 106 "youngr.y" /* yacc.c:1646  */
+#line 111 "youngr.y" /* yacc.c:1646  */
     {
                                 printRule("CONST", "INTCONST");
                                 (yyval.typeInfo).type = INT;
-                                (yyval.typeInfo).numParams = NOT_APPLICABLE;
+                                (yyval.typeInfo).numParams = 1;
                                 (yyval.typeInfo).returnType = NOT_APPLICABLE;
                             }
-#line 1372 "youngr.tab.c" /* yacc.c:1646  */
+#line 1377 "youngr.tab.c" /* yacc.c:1646  */
     break;
 
   case 7:
-#line 113 "youngr.y" /* yacc.c:1646  */
+#line 118 "youngr.y" /* yacc.c:1646  */
     {
                                 printRule("CONST", "STRCONST");
                                 (yyval.typeInfo).type = STR;
-                                (yyval.typeInfo).numParams = NOT_APPLICABLE;
+                                (yyval.typeInfo).numParams = 1;
                                 (yyval.typeInfo).returnType = NOT_APPLICABLE;
                             }
-#line 1383 "youngr.tab.c" /* yacc.c:1646  */
+#line 1388 "youngr.tab.c" /* yacc.c:1646  */
     break;
 
   case 8:
-#line 120 "youngr.y" /* yacc.c:1646  */
+#line 125 "youngr.y" /* yacc.c:1646  */
     {
                                 printRule("CONST", "t");
                                 (yyval.typeInfo).type = BOOL;
-                                (yyval.typeInfo).numParams = NOT_APPLICABLE;
+                                (yyval.typeInfo).numParams = 1;
                                 (yyval.typeInfo).returnType = NOT_APPLICABLE;
                             }
-#line 1394 "youngr.tab.c" /* yacc.c:1646  */
+#line 1399 "youngr.tab.c" /* yacc.c:1646  */
     break;
 
   case 9:
-#line 127 "youngr.y" /* yacc.c:1646  */
+#line 132 "youngr.y" /* yacc.c:1646  */
     {
                                 printRule("CONST", "nil");
                                 (yyval.typeInfo).type = BOOL;
-                                (yyval.typeInfo).numParams = NOT_APPLICABLE;
+                                (yyval.typeInfo).numParams = 1;
                                 (yyval.typeInfo).returnType = NOT_APPLICABLE;
                             }
-#line 1405 "youngr.tab.c" /* yacc.c:1646  */
+#line 1410 "youngr.tab.c" /* yacc.c:1646  */
     break;
 
   case 10:
-#line 135 "youngr.y" /* yacc.c:1646  */
+#line 140 "youngr.y" /* yacc.c:1646  */
     {
                                 printRule("PARENTHESIZED_EXPR", "ARITHLOGIC_EXPR");
                                 (yyval.typeInfo).type = (yyvsp[0].typeInfo).type;
                                 (yyval.typeInfo).numParams = (yyvsp[0].typeInfo).numParams;
                                 (yyval.typeInfo).returnType = (yyvsp[0].typeInfo).returnType;
                             }
-#line 1416 "youngr.tab.c" /* yacc.c:1646  */
+#line 1421 "youngr.tab.c" /* yacc.c:1646  */
     break;
 
   case 11:
-#line 142 "youngr.y" /* yacc.c:1646  */
+#line 147 "youngr.y" /* yacc.c:1646  */
     {
                                 printRule("PARENTHESIZED_EXPR", "IF_EXPR");
                                 (yyval.typeInfo).type = (yyvsp[0].typeInfo).type;
                                 (yyval.typeInfo).numParams = (yyvsp[0].typeInfo).numParams;
                                 (yyval.typeInfo).returnType = (yyvsp[0].typeInfo).returnType;
                             }
-#line 1427 "youngr.tab.c" /* yacc.c:1646  */
+#line 1432 "youngr.tab.c" /* yacc.c:1646  */
     break;
 
   case 12:
-#line 149 "youngr.y" /* yacc.c:1646  */
+#line 154 "youngr.y" /* yacc.c:1646  */
     {
                                 printRule("PARENTHESIZED_EXPR", "LET_EXPR");
                                 (yyval.typeInfo).type = (yyvsp[0].typeInfo).type;
                                 (yyval.typeInfo).numParams = (yyvsp[0].typeInfo).numParams;
                                 (yyval.typeInfo).returnType = (yyvsp[0].typeInfo).returnType;
                             }
-#line 1438 "youngr.tab.c" /* yacc.c:1646  */
+#line 1443 "youngr.tab.c" /* yacc.c:1646  */
     break;
 
   case 13:
-#line 156 "youngr.y" /* yacc.c:1646  */
+#line 161 "youngr.y" /* yacc.c:1646  */
     {
                                 printRule("PARENTHESIZED_EXPR", "LAMBDA_EXPR");
                                 (yyval.typeInfo).type = (yyvsp[0].typeInfo).type;
                                 (yyval.typeInfo).numParams = (yyvsp[0].typeInfo).numParams;
                                 (yyval.typeInfo).returnType = (yyvsp[0].typeInfo).returnType;
                             }
-#line 1449 "youngr.tab.c" /* yacc.c:1646  */
+#line 1454 "youngr.tab.c" /* yacc.c:1646  */
     break;
 
   case 14:
-#line 163 "youngr.y" /* yacc.c:1646  */
+#line 168 "youngr.y" /* yacc.c:1646  */
     {
                                 printRule("PARENTHESIZED_EXPR", "PRINT_EXPR");
                                 (yyval.typeInfo).type = (yyvsp[0].typeInfo).type;
                                 (yyval.typeInfo).numParams = (yyvsp[0].typeInfo).numParams;
                                 (yyval.typeInfo).returnType = (yyvsp[0].typeInfo).returnType;
                             }
-#line 1460 "youngr.tab.c" /* yacc.c:1646  */
+#line 1465 "youngr.tab.c" /* yacc.c:1646  */
     break;
 
   case 15:
-#line 170 "youngr.y" /* yacc.c:1646  */
+#line 175 "youngr.y" /* yacc.c:1646  */
     {
                                 printRule("PARENTHESIZED_EXPR", "INPUT_EXPR");
                                 (yyval.typeInfo).type = (yyvsp[0].typeInfo).type;
                                 (yyval.typeInfo).numParams = (yyvsp[0].typeInfo).numParams;
                                 (yyval.typeInfo).returnType = (yyvsp[0].typeInfo).returnType;
                             }
-#line 1471 "youngr.tab.c" /* yacc.c:1646  */
+#line 1476 "youngr.tab.c" /* yacc.c:1646  */
     break;
 
   case 16:
-#line 177 "youngr.y" /* yacc.c:1646  */
+#line 182 "youngr.y" /* yacc.c:1646  */
     {
+                                if((yyvsp[0].typeInfo).numParams > lambda.front() && (isLambda == true && !lambda.empty()))
+                                {
+                                    yyerror("Too many parameters in function call");
+                                    return(1);
+                                }
+                                else if((yyvsp[0].typeInfo).numParams < lambda.front() && (isLambda == true && !lambda.empty()))
+                                {
+                                    yyerror("Too few parameters in function to call");
+                                    return(1);
+                                }
                                 printRule("PARENTHESIZED_EXPR", "EXPR_LIST");
                                 (yyval.typeInfo).type = (yyvsp[0].typeInfo).type;
                                 (yyval.typeInfo).numParams = (yyvsp[0].typeInfo).numParams;
                                 (yyval.typeInfo).returnType = (yyvsp[0].typeInfo).returnType;
+                                lambda.pop();
                             }
-#line 1482 "youngr.tab.c" /* yacc.c:1646  */
+#line 1498 "youngr.tab.c" /* yacc.c:1646  */
     break;
 
   case 17:
-#line 185 "youngr.y" /* yacc.c:1646  */
+#line 201 "youngr.y" /* yacc.c:1646  */
     {
                                 printRule("ARITHLOGIC_EXPR", "UN_OP EXPR");
                                 if((yyvsp[0].typeInfo).type == FUNCTION)
@@ -1494,11 +1510,11 @@ yyreduce:
                                 (yyval.typeInfo).numParams = NOT_APPLICABLE;
                                 (yyval.typeInfo).returnType = NOT_APPLICABLE;
                             }
-#line 1498 "youngr.tab.c" /* yacc.c:1646  */
+#line 1514 "youngr.tab.c" /* yacc.c:1646  */
     break;
 
   case 18:
-#line 197 "youngr.y" /* yacc.c:1646  */
+#line 213 "youngr.y" /* yacc.c:1646  */
     {
                                 printRule("ARITHLOGIC_EXPR", "BIN_OP EXPR EXPR");
                                 if((yyvsp[-2].num) == ARITHMETIC_OP)
@@ -1522,12 +1538,12 @@ yyreduce:
                                 }
                                 else if((yyvsp[-2].num) == RELATIONAL_OP)
                                 {
-                                    if(((yyvsp[-1].typeInfo).type == FUNCTION) || ((yyvsp[-1].typeInfo).type != INT && (yyvsp[-1].typeInfo).type != STR))
+                                    if(((yyvsp[-1].typeInfo).type == FUNCTION) || ((yyvsp[-1].typeInfo).type != STR && (yyvsp[-1].typeInfo).type != INT))
                                     {
                                         yyerror("Arg 1 must be integer or string");
                                         return(1);
                                     }
-                                    else if(((yyvsp[0].typeInfo).type == FUNCTION) || ((yyvsp[0].typeInfo).type != INT && (yyvsp[0].typeInfo).type != STR))
+                                    else if(((yyvsp[0].typeInfo).type == FUNCTION) || ((yyvsp[0].typeInfo).type != STR && (yyvsp[0].typeInfo).type != INT))
                                     {
                                         yyerror("Arg 2 must be integer or string");
                                         return(1);
@@ -1551,17 +1567,16 @@ yyreduce:
                                         yyerror("Arg 2 cannot be function");
                                         return(1);
                                     }
-
                                     (yyval.typeInfo).type = BOOL;
                                     (yyval.typeInfo).numParams = (yyvsp[-1].typeInfo).numParams + (yyvsp[0].typeInfo).numParams;
                                     (yyval.typeInfo).returnType = BOOL;
                                 }
                             }
-#line 1561 "youngr.tab.c" /* yacc.c:1646  */
+#line 1576 "youngr.tab.c" /* yacc.c:1646  */
     break;
 
   case 19:
-#line 257 "youngr.y" /* yacc.c:1646  */
+#line 272 "youngr.y" /* yacc.c:1646  */
     {
                                 printRule("IF_EXPR", "if EXPR EXPR EXPR");
                                 if((yyvsp[0].typeInfo).type == FUNCTION)
@@ -1580,21 +1595,24 @@ yyreduce:
                                     return(1);
                                 }
                                 
-                                if((yyvsp[-1].typeInfo).type&(yyvsp[0].typeInfo).type == INT)
+                                if((yyvsp[-2].typeInfo).type&(yyvsp[-1].typeInfo).type&(yyvsp[0].typeInfo).type == INT)
                                 {
                                     (yyval.typeInfo).type = INT;
-                                    (yyval.typeInfo).numParams = (yyvsp[-2].typeInfo).numParams + (yyvsp[-1].typeInfo).numParams;
+                                    (yyval.typeInfo).numParams = (yyvsp[-2].typeInfo).numParams + (yyvsp[-1].typeInfo).numParams + (yyvsp[0].typeInfo).numParams;
                                     (yyval.typeInfo).returnType = INT;
                                 }
                             }
-#line 1591 "youngr.tab.c" /* yacc.c:1646  */
+#line 1606 "youngr.tab.c" /* yacc.c:1646  */
     break;
 
   case 20:
-#line 284 "youngr.y" /* yacc.c:1646  */
+#line 299 "youngr.y" /* yacc.c:1646  */
     {
                                 printRule("LET_EXPR", "let* ( ID_EXPR_LIST ) EXPR");
                                 endScope();
+                                isLambda = false;
+                                isLet = true;
+
                                 if((yyvsp[0].typeInfo).type == FUNCTION)
                                 {
                                     yyerror("Arg 2 cannot be function");
@@ -1602,22 +1620,25 @@ yyreduce:
                                 }
 
                                 (yyval.typeInfo).type = (yyvsp[0].typeInfo).type;
-                                (yyval.typeInfo).numParams = (yyvsp[0].typeInfo).numParams;
+                                (yyval.typeInfo).numParams = numParameters;
                                 (yyval.typeInfo).returnType = (yyvsp[0].typeInfo).returnType;
                             }
-#line 1609 "youngr.tab.c" /* yacc.c:1646  */
+#line 1627 "youngr.tab.c" /* yacc.c:1646  */
     break;
 
   case 21:
-#line 299 "youngr.y" /* yacc.c:1646  */
+#line 317 "youngr.y" /* yacc.c:1646  */
     {
                                 printRule("ID_EXPR_LIST", "epsilon");
+                                (yyval.typeInfo).type = UNDEFINED;
+                                (yyval.typeInfo).numParams = 0;
+                                (yyval.typeInfo).returnType = UNDEFINED;
                             }
-#line 1617 "youngr.tab.c" /* yacc.c:1646  */
+#line 1638 "youngr.tab.c" /* yacc.c:1646  */
     break;
 
   case 22:
-#line 303 "youngr.y" /* yacc.c:1646  */
+#line 324 "youngr.y" /* yacc.c:1646  */
     {
                                 printRule("ID_EXPR_LIST", "ID_EXPR_LIST ( IDENT EXPR )");
                                 printf ("___Adding %s to symbol table\n", (yyvsp[-2].text));
@@ -1634,40 +1655,64 @@ yyreduce:
                                   scopeStack.top().addEntry(entry);
                                 }
 
-                                (yyval.typeInfo).type = (yyvsp[-1].typeInfo).type;
-                                (yyval.typeInfo).numParams = (yyvsp[-1].typeInfo).numParams;
+                                if(isLet == true)
+                                {
+                                    (yyval.typeInfo).type = (yyvsp[-1].typeInfo).type;
+                                }
+                                else
+                                {
+                                    (yyval.typeInfo).type = (yyvsp[-1].typeInfo).returnType;
+                                }
+                                (yyval.typeInfo).numParams = scopeStack.top().getNumParams(string((yyvsp[-2].text)));
                                 (yyval.typeInfo).returnType = (yyvsp[-1].typeInfo).returnType;
                             }
-#line 1642 "youngr.tab.c" /* yacc.c:1646  */
+#line 1670 "youngr.tab.c" /* yacc.c:1646  */
     break;
 
   case 23:
-#line 325 "youngr.y" /* yacc.c:1646  */
+#line 353 "youngr.y" /* yacc.c:1646  */
     {
-                                printRule("LAMBDA_EXPR","lamda ( ID_LIST ) EXPR");
-                                endScope();
+                                printRule("LAMBDA_EXPR","lambda ( ID_LIST ) EXPR");
+                                numParameters = endScope();
+                                isLambda = true;
+
                                 if((yyvsp[0].typeInfo).type == FUNCTION)
                                 {
                                     yyerror("Arg 2 cannot be function");
                                     return(1);
                                 }
+
+                                if(numParameters > (yyvsp[-2].typeInfo).numParams)
+                                {
+                                    yyerror("Too many parameters in function call");
+                                    return(1);
+                                }
+                                else if(numParameters < (yyvsp[-2].typeInfo).numParams)
+                                {
+                                    yyerror("Too few parameters in function call");
+                                    return(1);
+                                }
                                 (yyval.typeInfo).type = FUNCTION;
-                                (yyval.typeInfo).numParams = (yyvsp[-2].typeInfo).numParams;
+                                (yyval.typeInfo).numParams = numParameters;
                                 (yyval.typeInfo).returnType = (yyvsp[0].typeInfo).type;
+                                lambda.push((yyvsp[-2].typeInfo).numParams);
                             }
-#line 1659 "youngr.tab.c" /* yacc.c:1646  */
+#line 1701 "youngr.tab.c" /* yacc.c:1646  */
     break;
 
   case 24:
-#line 339 "youngr.y" /* yacc.c:1646  */
+#line 381 "youngr.y" /* yacc.c:1646  */
     {
                                 printRule("ID_LIST", "epsilon");
+                                (yyval.typeInfo).type = UNDEFINED;
+                                (yyval.typeInfo).numParams = 0;
+                                (yyval.typeInfo).returnType = UNDEFINED;
                             }
-#line 1667 "youngr.tab.c" /* yacc.c:1646  */
+#line 1712 "youngr.tab.c" /* yacc.c:1646  */
     break;
 
   case 25:
-#line 343 "youngr.y" /* yacc.c:1646  */
+#line 388 "youngr.y" /* yacc.c:1646  */
     {
                                 printRule("ID_LIST", "ID_LIST IDENT");
                                 printf ("___Adding %s to symbol table\n", (yyvsp[0].text));
@@ -1684,14 +1729,14 @@ yyreduce:
                                   scopeStack.top().addEntry(entry);
                                 }
                                 (yyval.typeInfo).type = INT;
-                                (yyval.typeInfo).numParams = (yyvsp[-1].typeInfo).numParams + 1;
+                                (yyval.typeInfo).numParams = (yyval.typeInfo).numParams + 1;
                                 (yyval.typeInfo).returnType = INT;
                             }
-#line 1691 "youngr.tab.c" /* yacc.c:1646  */
+#line 1736 "youngr.tab.c" /* yacc.c:1646  */
     break;
 
   case 26:
-#line 364 "youngr.y" /* yacc.c:1646  */
+#line 409 "youngr.y" /* yacc.c:1646  */
     {
                                 printRule("PRINT_EXPR", "print EXPR");
                                 if((yyvsp[0].typeInfo).type = FUNCTION)
@@ -1700,192 +1745,189 @@ yyreduce:
                                     return(1);
                                 }
                                 (yyval.typeInfo).type = (yyvsp[0].typeInfo).type;
-                                (yyval.typeInfo).numParams = (yyvsp[0].typeInfo).numParams;
+                                (yyval.typeInfo).numParams = 0;
                                 (yyval.typeInfo).returnType = (yyvsp[0].typeInfo).returnType;
                             }
-#line 1707 "youngr.tab.c" /* yacc.c:1646  */
+#line 1752 "youngr.tab.c" /* yacc.c:1646  */
     break;
 
   case 27:
-#line 377 "youngr.y" /* yacc.c:1646  */
+#line 422 "youngr.y" /* yacc.c:1646  */
     {
                                 printRule("INPUT_EXPR", "input");
                                 (yyval.typeInfo).type = INT;
-                                (yyval.typeInfo).numParams = 1;
+                                (yyval.typeInfo).numParams = 0;
                                 (yyval.typeInfo).returnType = INT;
-                            }
-#line 1718 "youngr.tab.c" /* yacc.c:1646  */
-    break;
-
-  case 28:
-#line 385 "youngr.y" /* yacc.c:1646  */
-    {
-                                printRule("EXPR_LIST", "EXPR EXPR_LIST");
-                                if((yyvsp[-1].typeInfo).type == FUNCTION)
-                                {
-                                    (yyval.typeInfo).type = (yyvsp[-1].typeInfo).returnType;
-                                }
-
-                                if((yyvsp[-1].typeInfo).numParams < (yyvsp[0].typeInfo).numParams)
-                                {
-                                    printf("------ NUM EXP %d\n------ NUM ACT %d\n", (yyvsp[-1].typeInfo).numParams, (yyvsp[0].typeInfo).numParams);
-                                    yyerror("Too few parameters in function call");
-                                    return(1);
-                                }
-                                else if ((yyvsp[-1].typeInfo).numParams > (yyvsp[0].typeInfo).numParams)
-                                {
-                                    printf("------ NUM EXP %d\n------ NUM ACT %d\n", (yyvsp[-1].typeInfo).numParams, (yyvsp[0].typeInfo).numParams);
-                                    yyerror("Too many parameters in function call");
-                                    return(1);  
-                                }
-                            }
-#line 1743 "youngr.tab.c" /* yacc.c:1646  */
-    break;
-
-  case 29:
-#line 406 "youngr.y" /* yacc.c:1646  */
-    {
-                                printRule("EXPR_LIST", "EXPR");
-                                (yyval.typeInfo).type = (yyvsp[0].typeInfo).type;
-                                (yyval.typeInfo).numParams = (yyvsp[0].typeInfo).numParams;
-                                (yyval.typeInfo).returnType = (yyvsp[0].typeInfo).returnType;
-                            }
-#line 1754 "youngr.tab.c" /* yacc.c:1646  */
-    break;
-
-  case 30:
-#line 414 "youngr.y" /* yacc.c:1646  */
-    {
-                                printRule("BIN_OP", "ARITH_OP");
-                                (yyval.num) = ARITHMETIC_OP;
                             }
 #line 1763 "youngr.tab.c" /* yacc.c:1646  */
     break;
 
-  case 31:
-#line 419 "youngr.y" /* yacc.c:1646  */
-    {
-                                printRule("BIN_OP", "LOG_OP");
-                                (yyval.num) = LOGICAL_OP;
-                            }
-#line 1772 "youngr.tab.c" /* yacc.c:1646  */
-    break;
-
-  case 32:
-#line 424 "youngr.y" /* yacc.c:1646  */
-    {
-                                printRule("BIN_OP", "REL_OP");
-                                (yyval.num) = RELATIONAL_OP;
-                            }
-#line 1781 "youngr.tab.c" /* yacc.c:1646  */
-    break;
-
-  case 33:
+  case 28:
 #line 430 "youngr.y" /* yacc.c:1646  */
     {
-                                printRule("ARITH_OP", "*");
+                                printRule("EXPR_LIST", "EXPR EXPR_LIST");
+                                if((yyvsp[-1].typeInfo).type == FUNCTION){
+                                    (yyval.typeInfo).type = (yyvsp[-1].typeInfo).returnType;
+                                }
+                                else{
+                                    (yyval.typeInfo).type = (yyvsp[-1].typeInfo).type;
+                                }
+                                (yyval.typeInfo).type = (yyvsp[-1].typeInfo).type;
+                                (yyval.typeInfo).numParams = (yyvsp[0].typeInfo).numParams + 1;
+                                (yyval.typeInfo).returnType = (yyvsp[-1].typeInfo).returnType;
                             }
-#line 1789 "youngr.tab.c" /* yacc.c:1646  */
+#line 1780 "youngr.tab.c" /* yacc.c:1646  */
     break;
 
-  case 34:
-#line 434 "youngr.y" /* yacc.c:1646  */
+  case 29:
+#line 443 "youngr.y" /* yacc.c:1646  */
     {
-                                printRule("ARITH_OP", "-");
+                                printRule("EXPR_LIST", "EXPR");
+                                if((yyvsp[0].typeInfo).type == FUNCTION){
+                                    (yyval.typeInfo).type = (yyvsp[0].typeInfo).returnType;
+                                }
+                                else{
+                                    (yyval.typeInfo).type = (yyvsp[0].typeInfo).type;
+                                }
+                                (yyval.typeInfo).numParams = 0;
+                                (yyval.typeInfo).returnType = (yyvsp[0].typeInfo).returnType;
                             }
-#line 1797 "youngr.tab.c" /* yacc.c:1646  */
+#line 1796 "youngr.tab.c" /* yacc.c:1646  */
     break;
 
-  case 35:
-#line 438 "youngr.y" /* yacc.c:1646  */
+  case 30:
+#line 456 "youngr.y" /* yacc.c:1646  */
     {
-                                printRule("ARITH_OP", "/");
+                                printRule("BIN_OP", "ARITH_OP");
+                                (yyval.num) = ARITHMETIC_OP;
                             }
 #line 1805 "youngr.tab.c" /* yacc.c:1646  */
     break;
 
+  case 31:
+#line 461 "youngr.y" /* yacc.c:1646  */
+    {
+                                printRule("BIN_OP", "LOG_OP");
+                                (yyval.num) = LOGICAL_OP;
+                            }
+#line 1814 "youngr.tab.c" /* yacc.c:1646  */
+    break;
+
+  case 32:
+#line 466 "youngr.y" /* yacc.c:1646  */
+    {
+                                printRule("BIN_OP", "REL_OP");
+                                (yyval.num) = RELATIONAL_OP;
+                            }
+#line 1823 "youngr.tab.c" /* yacc.c:1646  */
+    break;
+
+  case 33:
+#line 472 "youngr.y" /* yacc.c:1646  */
+    {
+                                printRule("ARITH_OP", "*");
+                            }
+#line 1831 "youngr.tab.c" /* yacc.c:1646  */
+    break;
+
+  case 34:
+#line 476 "youngr.y" /* yacc.c:1646  */
+    {
+                                printRule("ARITH_OP", "-");
+                            }
+#line 1839 "youngr.tab.c" /* yacc.c:1646  */
+    break;
+
+  case 35:
+#line 480 "youngr.y" /* yacc.c:1646  */
+    {
+                                printRule("ARITH_OP", "/");
+                            }
+#line 1847 "youngr.tab.c" /* yacc.c:1646  */
+    break;
+
   case 36:
-#line 442 "youngr.y" /* yacc.c:1646  */
+#line 484 "youngr.y" /* yacc.c:1646  */
     {
                                 printRule("ARITH_OP", "+");
                             }
-#line 1813 "youngr.tab.c" /* yacc.c:1646  */
+#line 1855 "youngr.tab.c" /* yacc.c:1646  */
     break;
 
   case 37:
-#line 447 "youngr.y" /* yacc.c:1646  */
+#line 489 "youngr.y" /* yacc.c:1646  */
     {
                                 printRule("LOG_OP", "and");
                             }
-#line 1821 "youngr.tab.c" /* yacc.c:1646  */
+#line 1863 "youngr.tab.c" /* yacc.c:1646  */
     break;
 
   case 38:
-#line 451 "youngr.y" /* yacc.c:1646  */
+#line 493 "youngr.y" /* yacc.c:1646  */
     {
                                 printRule("LOG_OP", "or");
                             }
-#line 1829 "youngr.tab.c" /* yacc.c:1646  */
+#line 1871 "youngr.tab.c" /* yacc.c:1646  */
     break;
 
   case 39:
-#line 456 "youngr.y" /* yacc.c:1646  */
+#line 498 "youngr.y" /* yacc.c:1646  */
     {
                                 printRule ("REL_OP", "<");
                             }
-#line 1837 "youngr.tab.c" /* yacc.c:1646  */
+#line 1879 "youngr.tab.c" /* yacc.c:1646  */
     break;
 
   case 40:
-#line 460 "youngr.y" /* yacc.c:1646  */
+#line 502 "youngr.y" /* yacc.c:1646  */
     {
                                 printRule("REL_OP", ">");
                             }
-#line 1845 "youngr.tab.c" /* yacc.c:1646  */
+#line 1887 "youngr.tab.c" /* yacc.c:1646  */
     break;
 
   case 41:
-#line 464 "youngr.y" /* yacc.c:1646  */
+#line 506 "youngr.y" /* yacc.c:1646  */
     {
                                 printRule("REL_OP", "<=");
                             }
-#line 1853 "youngr.tab.c" /* yacc.c:1646  */
+#line 1895 "youngr.tab.c" /* yacc.c:1646  */
     break;
 
   case 42:
-#line 468 "youngr.y" /* yacc.c:1646  */
+#line 510 "youngr.y" /* yacc.c:1646  */
     {
                                 printRule("REL_OP", ">=");
                             }
-#line 1861 "youngr.tab.c" /* yacc.c:1646  */
+#line 1903 "youngr.tab.c" /* yacc.c:1646  */
     break;
 
   case 43:
-#line 472 "youngr.y" /* yacc.c:1646  */
+#line 514 "youngr.y" /* yacc.c:1646  */
     {
                                 printRule("REL_OP", "=");
                             }
-#line 1869 "youngr.tab.c" /* yacc.c:1646  */
+#line 1911 "youngr.tab.c" /* yacc.c:1646  */
     break;
 
   case 44:
-#line 476 "youngr.y" /* yacc.c:1646  */
+#line 518 "youngr.y" /* yacc.c:1646  */
     {
                                 printRule("REL_OP", "/=");
                             }
-#line 1877 "youngr.tab.c" /* yacc.c:1646  */
+#line 1919 "youngr.tab.c" /* yacc.c:1646  */
     break;
 
   case 45:
-#line 481 "youngr.y" /* yacc.c:1646  */
+#line 523 "youngr.y" /* yacc.c:1646  */
     {
                                 printRule("UN_OP", "not");
                             }
-#line 1885 "youngr.tab.c" /* yacc.c:1646  */
+#line 1927 "youngr.tab.c" /* yacc.c:1646  */
     break;
 
 
-#line 1889 "youngr.tab.c" /* yacc.c:1646  */
+#line 1931 "youngr.tab.c" /* yacc.c:1646  */
       default: break;
     }
   /* User semantic actions sometimes alter yychar, and that requires
@@ -2113,7 +2155,7 @@ yyreturn:
 #endif
   return yyresult;
 }
-#line 485 "youngr.y" /* yacc.c:1906  */
+#line 527 "youngr.y" /* yacc.c:1906  */
 
 
 #include "lex.yy.c"
@@ -2125,10 +2167,12 @@ void beginScope()
   printf("\n___Entering new scope...\n\n");
 }
 
-void endScope()
+int endScope()
 {
+  int size = scopeStack.top().getMap().size();
   scopeStack.pop();
   printf("\n___Exiting scope...\n\n");
+  return size;
 }
 
 void printRule(const char *lhs, const char *rhs)

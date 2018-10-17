@@ -351,7 +351,7 @@ N_ID_EXPR_LIST          : /* epsilon */
                             ;
 N_LAMBDA_EXPR           : T_LAMBDA T_LPAREN N_ID_LIST T_RPAREN N_EXPR
                             {
-                                printRule("LAMBDA_EXPR","lamda ( ID_LIST ) EXPR");
+                                printRule("LAMBDA_EXPR","lambda ( ID_LIST ) EXPR");
                                 numParameters = endScope();
                                 isLambda = true;
 
