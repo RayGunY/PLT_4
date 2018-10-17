@@ -45,6 +45,20 @@ public:
     return hashTable[theName].getType();
   }
 
+  int getNumParams(string theName)
+  {
+    return hashTable[theName].getNumParams();
+  }
+
+  int getReturnType(string theName)
+  {
+    return hashTable[theName].getReturnType();
+  }
+
+  std::map < string, SYMBOL_TABLE_ENTRY > getMap()
+  {
+    return hashTable;
+  }
 };
 
 #endif  // SYMBOL_TABLE_H

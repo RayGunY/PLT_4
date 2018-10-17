@@ -16,8 +16,7 @@ class SYMBOL_TABLE_ENTRY
 {
 private:
   // Member variables
-  string name;
-  int typeCode;  
+  string name;  
   TYPE_INFO entry;
 
 public:
